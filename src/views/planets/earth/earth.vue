@@ -3,10 +3,15 @@
     <header class="header-planeta">
       <button class="nav-button" @click="goBack">⬅ Atrás</button>
       <h1>Planeta: Tierra</h1>
-      <button class="nav-button" @click="toggleRotation">{{
-          isRotating ? 'Detener Rotación' : 'Reanudar Rotación'
-        }}
-      </button>
+      <div class="header-buttons">
+        <button class="nav-button" @click="toggleRotation">{{
+            isRotating ? 'Detener Rotación' : 'Reanudar Rotación'
+          }}
+        </button>
+        <button class="nav-button exoplanet-button" @click="goToExoplanetView">
+          🌌 Observar Exoplanetas
+        </button>
+      </div>
     </header>
 
     <div class="main-content">
@@ -156,6 +161,10 @@ export default {
     },
     goBack() {
       this.$router.go(-1);
+    },
+    goToExoplanetView() {
+      // Navegar a la nueva página de observación de exoplanetas
+      this.$router.push('/earth/exoplanet-observer');
     },
     nextImage() {
       this.currentImageIndex = (this.currentImageIndex + 1) % this.images.length;
@@ -406,6 +415,24 @@ body {
   padding: 10px;
   background-color: #232323;
   color: white;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.exoplanet-button {
+  background-color: #4a90e2 !important;
+  border: 2px solid #5ba3f5;
+  transition: all 0.3s ease;
+}
+
+.exoplanet-button:hover {
+  background-color: #357abd !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
 }
 
 .back-button, .stop-button {

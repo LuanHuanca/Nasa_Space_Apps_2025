@@ -4,10 +4,15 @@
     <div class="top-bar">
       <!-- Título central -->
       <h1>Sistema Solar</h1>
-      <!-- Botón para detener/reanudar el movimiento de los planetas -->
-      <button class="pause-button" @click="toggleRotation">
-        {{ isRotating ? 'Detener' : 'Reanudar' }} Movimiento
-      </button>
+      <!-- Botones de control -->
+      <div class="control-buttons">
+        <button class="pause-button" @click="toggleRotation">
+          {{ isRotating ? 'Detener' : 'Reanudar' }} Movimiento
+        </button>
+        <button class="center-button" @click="centerView">
+          Centrar Vista
+        </button>
+      </div>
     </div>
     <!-- Cuadro emergente -->
     <div v-if="showModal" class="modal-overlay">
@@ -86,6 +91,11 @@ export default {
     const isRotating = ref(true); // Controla si los planetas están rotando o no
     let zoomIn = true; // Para manejar el estado de acercamiento
     let sun; // Variable para el Sol
+    
+    // Variables para el efecto dinámico de las estrellas
+    let mouseX = 0, mouseY = 0;
+    let windowHalfX = window.innerWidth / 2;
+    let windowHalfY = window.innerHeight / 2;
 
     // Función para regresar a la página anterior
     const goBack = () => {
@@ -154,31 +164,54 @@ export default {
     };
 
     const addStars = () => {
-      const textureLoader = new THREE.TextureLoader();
-      const material = new THREE.MeshBasicMaterial({
-        map: textureLoader.load(starsTexture),
-      }); // Usaremos temporalmente la textura de Marte
+      // Crear el fondo de estrellas con partículas dinámicas
+      const geometry = new THREE.BufferGeometry();
+      const vertices = [];
 
-      // Generar 100 estrellas
-      for (let i = 0; i < 200; i++) {
-        const radius = Math.random() * 0.4 + 0.2; // Tamaño pequeño para las estrellas, entre 0.02 y 0.12
-        const geometry = new THREE.SphereGeometry(radius, 16, 16);
+      // Crear una textura simple para las partículas (un círculo blanco)
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const context = canvas.getContext('2d');
+      
+      // Crear un círculo blanco con gradiente
+      const gradient = context.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.8)');
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, 64, 64);
+      
+      const sprite = new THREE.CanvasTexture(canvas);
 
-        const star = new THREE.Mesh(geometry, material);
+      // Generar partículas para las estrellas
+      for (let i = 0; i < 1000; i++) {
+        const x = 2000 * Math.random() - 1000;
+        const y = 2000 * Math.random() - 1000;
+        const z = 2000 * Math.random() - 1000;
 
-        // Posición aleatoria, pero con mayor distancia (más allá del último planeta)
-        const distance = Math.random() * 600 + 300; // Distancia aleatoria entre 150 y 550 (más allá de Neptuno)
-
-        // Aleatorizar posiciones en un espacio tridimensional alrededor del sistema solar
-        const posX = (Math.random() - 0.5) * distance * 2; // Distribuir en un rango más amplio
-        const posY = (Math.random() - 0.5) * distance * 2;
-        const posZ = (Math.random() - 0.5) * distance * 2;
-
-        star.position.set(posX, posY, posZ);
-
-        // Añadir la estrella a la escena
-        scene.add(star);
+        vertices.push(x, y, z);
       }
+
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+      // Material para las partículas con cambio de color dinámico
+      const starsMaterial = new THREE.PointsMaterial({
+        size: 35,
+        sizeAttenuation: true,
+        map: sprite,
+        alphaTest: 0.5,
+        transparent: true
+      });
+
+      starsMaterial.color.setHSL(1.0, 0.3, 0.7);
+
+      const starsParticles = new THREE.Points(geometry, starsMaterial);
+      scene.add(starsParticles);
+
+      // Guardar referencia del material para poder animarlo
+      scene.userData.starsMaterial = starsMaterial;
     };
 
     const initScene = () => {
@@ -246,6 +279,9 @@ export default {
 
       window.addEventListener("resize", onWindowResize);
       renderer.domElement.addEventListener("click", onCanvasClick);
+      
+      // Agregar event listener para el movimiento del mouse para el efecto dinámico
+      document.body.addEventListener('pointermove', onPointerMove);
 
       // Llamada a las funciones para añadir cometas y asteroides
       //addComets();
@@ -256,10 +292,21 @@ export default {
     };
 
     const onWindowResize = () => {
+      windowHalfX = window.innerWidth / 2;
+      windowHalfY = window.innerHeight / 2;
+      
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
       controls.update();
+    };
+
+    // Función para manejar el movimiento del mouse
+    const onPointerMove = (event) => {
+      if (event.isPrimary === false) return;
+      
+      mouseX = event.clientX - windowHalfX;
+      mouseY = event.clientY - windowHalfY;
     };
 
     const addPlanets = () => {
@@ -515,6 +562,42 @@ const navigateToPlanet = () => {
       zoomOutAnimation();
     };
 
+    // Función para centrar la vista del sistema solar
+    const centerView = () => {
+      // Posición óptima para ver todo el sistema solar
+      const optimalPosition = new THREE.Vector3(0, 30, 120); // Vista ligeramente elevada y alejada
+      const sunPosition = new THREE.Vector3(0, 0, 0); // Centro en el Sol
+
+      let t = 0; // Tiempo de interpolación (0 a 1)
+
+      // Cancelar cualquier planeta seleccionado
+      selectedPlanet.value = null;
+      targetPlanet = null;
+      zoomIn = false; // Detener cualquier zoom automático
+
+      // Crear una función de animación suave para centrar la vista
+      const centerAnimation = () => {
+        if (t < 1) {
+          t += 0.03; // Velocidad de la animación
+
+          // Interpolar la posición de la cámara hacia la posición óptima
+          camera.position.lerp(optimalPosition, t);
+
+          // Enfocar la cámara hacia el Sol (centro del sistema)
+          controls.target.lerp(sunPosition, t);
+
+          // Seguir animando
+          requestAnimationFrame(centerAnimation);
+        } else {
+          // Cuando termine la animación, actualizar controles
+          controls.update();
+        }
+      };
+
+      // Iniciar la animación de centrado
+      centerAnimation();
+    };
+
     const animate = () => {
       requestAnimationFrame(animate);
 
@@ -552,6 +635,19 @@ const navigateToPlanet = () => {
         moveToPlanet(); // Manejar el movimiento de acercamiento al planeta
       }
 
+      // Efecto dinámico para las estrellas con movimiento del mouse y cambio de color
+      if (scene.userData.starsMaterial) {
+        const time = Date.now() * 0.00005;
+        
+        // Movimiento sutil de la cámara basado en la posición del mouse
+        camera.position.x += (mouseX * 0.001 - camera.position.x) * 0.05;
+        camera.position.y += (-mouseY * 0.001 - camera.position.y) * 0.05;
+        
+        // Cambio de color dinámico de las estrellas
+        const h = (360 * (1.0 + time) % 360) / 360;
+        scene.userData.starsMaterial.color.setHSL(h, 0.5, 0.5);
+      }
+
       controls.update(); // Actualizar controles
       renderer.render(scene, camera); // Renderizar la escena
     };
@@ -570,6 +666,7 @@ const navigateToPlanet = () => {
 
     onBeforeUnmount(() => {
       window.removeEventListener("resize", onWindowResize);
+      document.body.removeEventListener('pointermove', onPointerMove);
       renderer.dispose(); // Limpiar recursos
     });
 
@@ -579,6 +676,7 @@ const navigateToPlanet = () => {
       isRotating,
       goBack,
       toggleRotation,
+      centerView,
       canvasContainer,
       selectedPlanet,
       resetView,
@@ -610,8 +708,15 @@ const navigateToPlanet = () => {
   flex: 1;
 }
 
+.control-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .nav-button,
-.pause-button {
+.pause-button,
+.center-button {
   background-color: #003366; /* Color de fondo */
   color: white;
   border: 2px solid #00ffff; /* Borde brillante */
@@ -620,11 +725,21 @@ const navigateToPlanet = () => {
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  white-space: nowrap;
 }
 
 .nav-button:hover,
-.pause-button:hover {
+.pause-button:hover,
+.center-button:hover {
   background-color: #005580;
+}
+
+.center-button {
+  border-color: #00ff88; /* Borde verde para diferenciarlo */
+}
+
+.center-button:hover {
+  background-color: #005540;
 }
 
 .modal-overlay {
