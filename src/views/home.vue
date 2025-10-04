@@ -2,8 +2,6 @@
   <div id="home">
     <!-- Barra superior -->
     <div class="top-bar">
-      <!-- Botón de navegación -->
-      <button class="nav-button" @click="goBack">⬅ Atrás</button>
       <!-- Título central -->
       <h1>Sistema Solar</h1>
       <!-- Botón para detener/reanudar el movimiento de los planetas -->
@@ -23,14 +21,6 @@
           información detallada, simulaciones y visualizaciones en 3D para
           comprender las complejidades de los planetas, asteroides y otros
           cuerpos celestes.
-        </p>
-        <p>
-          Como estudiante universitario, tendrás la oportunidad de sumergirte en
-          un entorno de aprendizaje inmersivo, donde la precisión científica y
-          la tecnología de última generación convergen para ofrecerte una
-          experiencia educativa única. Aprovecha este recurso para explorar más
-          allá de los conceptos básicos y obtener un conocimiento avanzado que
-          enriquecerá tus estudios y proyectos de investigación.
         </p>
         <button @click="closeModal">Comenzar la Exploración</button>
       </div>
