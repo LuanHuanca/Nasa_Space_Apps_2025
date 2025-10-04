@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
-const apiKey = 'AIzaSyCvn69rzg3TRORMrnHat5dOnbx66kbmI8s';  // Define la API Key directamente aquí
+const apiKey = import.meta.env.VITE_GOOGLE_GENAI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 export default {
@@ -16,7 +16,7 @@ export default {
     methods: {
         async initChat() {
             const model = genAI.getGenerativeModel({
-                model: "gemini-1.5-pro-latest",
+                model: "gemini-2.5-flash",
                 systemInstruction: "Eres un experto en python y tu primer mensaje es dar la bienvenida al usuario, su nombre es Max",
             });
 

@@ -49,7 +49,7 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import marked from 'marked';
 
-const apiKey = 'AIzaSyCvn69rzg3TRORMrnHat5dOnbx66kbmI8s';
+const apiKey = import.meta.env.VITE_GOOGLE_GENAI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
 export default {
@@ -71,7 +71,7 @@ export default {
       promptIA = "Eres un experto y profesional astrologo, tienes mucho concocimiento para atender a preguntas acerca del planeta tierra. No puedes responder nada realacionado a otra rama que no sea astronomia y te especializas en la tierra. Da una bienvenida al usuario preguntandole que le interas saber de la tierra";
 
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-pro-latest",
+        model: "gemini-2.5-flash",
         systemInstruction: promptIA
       });
 
