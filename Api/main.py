@@ -7,16 +7,31 @@ import joblib
 import pandas as pd
 import numpy as np
 import requests
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException, Body
+from fastapi.middleware.cors import CORSMiddleware
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
+
+
 # Inicializar FastAPI
 app = FastAPI(
     title="Exoplanet Coordinate API",
     description="API para obtener y calcular coordenadas cartesianas de candidatos a exoplanetas (KOI)."
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,          # Lista de orígenes permitidos
+    allow_credentials=True,         # Permitir cookies y encabezados de autenticación
+    allow_methods=["*"],            # Permitir todos los métodos (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],            # Permitir todos los encabezados
 )
 
 # URLs de datos
@@ -178,3 +193,37 @@ async def get_exoplanet_candidates_ml(limit: int = 5) -> List[Dict[str, Any]]:
         })
 
     return results
+
+@app.post(
+    "/api/predict-exoplanet",
+    summary="Realizar predicción de exoplaneta con datos enviados por el cliente",
+)
+async def predict_exoplanet(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Recibe datos de entrada en formato JSON, los pasa al modelo ML y devuelve la predicción.
+    Ejemplo de entrada:
+    {
+        "koi_period": 372.53,
+        "koi_prad": 1.12,
+        "koi_teq": 579.43,
+        "koi_insol": 1.0,
+        "koi_model_snr": 12.3,
+        ...
+    }
+    """
+    # Verificar que el modelo esté cargado
+    if model is None or preprocessor is None:
+        raise HTTPException(status_code=503, detail="Modelo ML no disponible. Verifique los archivos en ./modelo")
+
+    # Validar que se enviaron datos
+    if not data:
+        raise HTTPException(status_code=400, detail="No se enviaron datos para la predicción.")
+
+    # Realizar predicción
+    result = predict_with_pipeline(data)
+
+    logger.info(f"Predicción realizada: {result}")
+    return {
+        "prediction": result["prediction"],
+        "probability": result["probability"]
+    }
