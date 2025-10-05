@@ -5,6 +5,7 @@
 </template>
 
 <script>
+import { markRaw } from 'vue';
 import * as THREE from 'three';
 import earthTexture from '@/assets/earth.jpg';
 
@@ -48,9 +49,9 @@ export default {
   },
   methods: {
     initHorizonView() {
-      this.scene = new THREE.Scene();
-      this.camera = new THREE.PerspectiveCamera(75, 800 / 400, 0.1, 1000);
-      this.renderer = new THREE.WebGLRenderer({ antialias: true });
+      this.scene = markRaw(new THREE.Scene());
+      this.camera = markRaw(new THREE.PerspectiveCamera(75, 800 / 400, 0.1, 1000));
+      this.renderer = markRaw(new THREE.WebGLRenderer({ antialias: true }));
       
       this.renderer.setSize(800, 400);
       this.renderer.setClearColor(0x000033);
@@ -90,35 +91,35 @@ export default {
     },
 
     createGreenGround() {
-      // Crear un plano circular verde como suelo
+      // Crear un plano circular verde como suelo - MAS VISIBLE
       const groundGeometry = new THREE.CircleGeometry(50, 64);
       const groundMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x2d5a27, // Verde oscuro natural
+        color: 0x228B22, // Verde más brillante y visible
         side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.8
+        transparent: false, // Sin transparencia para mejor visibilidad
+        opacity: 1.0
       });
       const ground = new THREE.Mesh(groundGeometry, groundMaterial);
       
       // Rotar el plano para que sea horizontal
       ground.rotation.x = -Math.PI / 2;
-      ground.position.y = -0.1; // Ligeramente debajo del nivel del horizonte
+      ground.position.y = -1; // Más abajo para ser más visible
       
       this.scene.add(ground);
+      console.log('✅ Suelo verde agregado al horizonte');
 
-      // Agregar textura de hierba opcional (patrón verde)
-      const grassGeometry = new THREE.CircleGeometry(45, 64);
-      const grassMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x4a7c59, // Verde hierba más claro
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.6
+      // Agregar un plano adicional para asegurar visibilidad
+      const extraGroundGeometry = new THREE.PlaneGeometry(100, 100);
+      const extraGroundMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x32CD32, // Verde lima más visible
+        side: THREE.DoubleSide
       });
-      const grass = new THREE.Mesh(grassGeometry, grassMaterial);
-      grass.rotation.x = -Math.PI / 2;
-      grass.position.y = -0.05;
+      const extraGround = new THREE.Mesh(extraGroundGeometry, extraGroundMaterial);
+      extraGround.rotation.x = -Math.PI / 2;
+      extraGround.position.y = -2;
       
-      this.scene.add(grass);
+      this.scene.add(extraGround);
+      console.log('✅ Suelo adicional agregado');
     },
 
     createSkySections() {
@@ -179,23 +180,40 @@ export default {
       let phi = 0;
       let theta = 0;
       
-      canvas.addEventListener('mousedown', () => {
+      // Mejorar controles de mouse
+      canvas.addEventListener('mousedown', (event) => {
+        event.preventDefault();
         isLooking = true;
+        canvas.style.cursor = 'grabbing';
       });
       
       canvas.addEventListener('mousemove', (event) => {
         if (isLooking) {
-          phi -= event.movementX * 0.01;
-          theta = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, theta - event.movementY * 0.01));
+          event.preventDefault();
+          // Incrementar sensibilidad para mejor respuesta
+          phi -= event.movementX * 0.005;
+          theta = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, theta - event.movementY * 0.005));
           
           this.camera.rotation.x = theta;
           this.camera.rotation.y = phi;
         }
       });
       
-      canvas.addEventListener('mouseup', () => {
+      canvas.addEventListener('mouseup', (event) => {
+        event.preventDefault();
         isLooking = false;
+        canvas.style.cursor = 'grab';
       });
+      
+      canvas.addEventListener('mouseleave', () => {
+        isLooking = false;
+        canvas.style.cursor = 'grab';
+      });
+      
+      // Establecer cursor inicial
+      canvas.style.cursor = 'grab';
+      
+      console.log('🎮 Controles de horizonte activados - Haz clic y arrastra para mirar alrededor');
     },
 
     updateExoplanetMarkers() {
@@ -290,5 +308,18 @@ export default {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   width: 100%;
   height: 100%;
+  border: 2px solid #00ff88;
+  position: relative;
+}
+
+.horizon-view canvas {
+  display: block;
+  user-select: none;
+  outline: none;
+}
+
+.horizon-view:hover {
+  border-color: #00cc6a;
+  box-shadow: 0 8px 32px rgba(0, 255, 136, 0.2);
 }
 </style>

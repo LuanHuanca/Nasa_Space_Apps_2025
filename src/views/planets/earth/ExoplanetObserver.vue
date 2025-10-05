@@ -1,3 +1,23 @@
+<!-- 
+❌ ARCHIVO OBSOLETO - NO SE USA ❌
+
+Este archivo ha sido reemplazado por ExoplanetObserverRefactored.vue
+que usa componentes modulares de /src/components/exoplanet/
+
+Router actual apunta a: ExoplanetObserverRefactored.vue
+Puedes eliminar este archivo de forma segura.
+
+Componentes modulares:
+- HeaderComponent.vue
+- LocationSelector.vue (incluye WorldMap.vue)
+- HorizonViewStep.vue (incluye HorizonViewer.vue)
+- LoadingIndicator.vue
+- ExoplanetList.vue
+- InstructionPanel.vue
+
+Fecha de obsolescencia: 2025-10-05
+-->
+
 <template>
   <div id="exoplanet-observer">
     <!-- Header -->
@@ -13,7 +33,7 @@
     <div v-if="currentStep === 1" class="step-container">
       <div class="instruction-panel">
         <h2>Paso 1: Selecciona tu ubicación en la Tierra</h2>
-        <p>Haz clic en cualquier punto del mapa para establecer tu posición de 22observación:</p>
+        <p>Haz clic en cualquier punto del mapa para establecer tu posición de observación:</p>
       </div>
       
       <div class="map-container">
@@ -77,6 +97,7 @@
 
 <script>
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 export default {
   name: 'ExoplanetObserver',
@@ -149,17 +170,16 @@ export default {
       const renderer = new THREE.WebGLRenderer({ antialias: true });
       
       renderer.setSize(800, 600);
-      renderer.setClearColor(0x001122);
       this.$refs.worldMap.appendChild(renderer.domElement);
       
       // Crear una esfera para representar la Tierra
       const geometry = new THREE.SphereGeometry(2, 64, 64);
-      const textureLoader = new THREE.TextureLoader();
+      const textureLoader = new THREE.TextureLoader().load('src/assets/earth.jpg');
       
       // Crear material con color azul-verde para simular la Tierra
       const material = new THREE.MeshPhongMaterial({
-        color: 0x4a90e2,
-        shininess: 100
+        color: textureLoader,
+        shininess: 50
       });
       
       const earth = new THREE.Mesh(geometry, material);
@@ -569,7 +589,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 20px;
+  padding: 5px 20px;
   background-color: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
 }
@@ -595,9 +615,9 @@ export default {
 
 .instruction-panel {
   background-color: rgba(255, 255, 255, 0.1);
-  padding: 20px;
+  padding: 10px;
   border-radius: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   backdrop-filter: blur(5px);
 }
 
@@ -635,7 +655,7 @@ export default {
 .horizon-container {
   display: flex;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .horizon-view {

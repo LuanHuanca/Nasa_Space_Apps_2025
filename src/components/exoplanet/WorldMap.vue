@@ -15,7 +15,9 @@
 
 <script>
 import * as THREE from 'three';
-import earthTexture from '@/assets/earth.jpg';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { markRaw } from 'vue'; // Importar markRaw para evitar proxificación
+import earthTexture from '@/assets/tierra.png'; // MISMA TEXTURA QUE EARTH.VUE
 
 export default {
   name: 'WorldMap',
@@ -32,142 +34,61 @@ export default {
       camera: null,
       renderer: null,
       earth: null,
-      marker: null
+      marker: null,
+      controls: null
     };
   },
   mounted() {
     this.initWorldMap();
   },
   beforeUnmount() {
+    if (this.controls) {
+      this.controls.dispose();
+    }
     if (this.renderer) {
       this.renderer.dispose();
     }
   },
   methods: {
     initWorldMap() {
-      // Crear el mapa mundial con Three.js
-      this.scene = new THREE.Scene();
-      this.camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
-      this.renderer = new THREE.WebGLRenderer({ antialias: true });
-      
-      this.renderer.setSize(800, 600);
-      this.renderer.setClearColor(0x001122);
-      this.$refs.worldMapContainer.appendChild(this.renderer.domElement);
-      
-      // Crear una esfera para representar la Tierra
-      const geometry = new THREE.SphereGeometry(2, 64, 64);
-      
-      // Cargar textura de la Tierra
-      const textureLoader = new THREE.TextureLoader();
-      const earthMap = textureLoader.load(earthTexture);
-      
-      // Crear material con la textura real de la Tierra
-      const material = new THREE.MeshPhongMaterial({
-        map: earthMap,
-        shininess: 50,
-        transparent: false
-      });
-      
-      this.earth = new THREE.Mesh(geometry, material);
-      this.scene.add(this.earth);
-      
-      // Agregar líneas de latitud y longitud
-      this.addGridLines();
-      
-      // Iluminación
-      const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
-      this.scene.add(ambientLight);
-      
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      directionalLight.position.set(5, 5, 5);
-      this.scene.add(directionalLight);
-      
+      // IMPLEMENTACION EXACTA DE EARTH.VUE
+      this.scene = markRaw(new THREE.Scene());
+      this.camera = markRaw(new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000));
       this.camera.position.z = 5;
-      
-      // Agregar controles de ratón
+
+      this.renderer = markRaw(new THREE.WebGLRenderer({ alpha: true }));
+      this.renderer.setSize(800, 600);
+      this.$refs.worldMapContainer.appendChild(this.renderer.domElement);
+
+      // Crear la esfera de la Tierra EXACTAMENTE como en earth.vue
+      const earthGeometry = new THREE.SphereGeometry(2, 32, 32); // Escalado para el mapa
+      const textureLoader = new THREE.TextureLoader();
+      const earthMaterial = new THREE.MeshBasicMaterial({
+        map: textureLoader.load(earthTexture),
+      });
+      this.earth = markRaw(new THREE.Mesh(earthGeometry, earthMaterial));
+      this.scene.add(this.earth);
+
+      console.log('🌍 Tierra creada con implementación EXACTA de earth.vue usando tierra.png');
+
+      // Controles de cámara EXACTOS de earth.vue
+      this.controls = markRaw(new OrbitControls(this.camera, this.renderer.domElement));
+      this.controls.enableDamping = true;
+      this.controls.dampingFactor = 0.25;
+      this.controls.enableZoom = true;
+
+      // Controles para colocar pin
       this.addMapControls();
-      
+
       // Iniciar animación
       this.animate();
     },
 
-    addGridLines() {
-      const material = new THREE.LineBasicMaterial({ color: 0x888888 });
-      
-      // Líneas de latitud
-      for (let lat = -80; lat <= 80; lat += 20) {
-        const geometry = new THREE.BufferGeometry();
-        const points = [];
-        for (let lng = 0; lng <= 360; lng += 5) {
-          const phi = (90 - lat) * (Math.PI / 180);
-          const theta = lng * (Math.PI / 180);
-          const x = 2.01 * Math.sin(phi) * Math.cos(theta);
-          const y = 2.01 * Math.cos(phi);
-          const z = 2.01 * Math.sin(phi) * Math.sin(theta);
-          points.push(x, y, z);
-        }
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-        const line = new THREE.Line(geometry, material);
-        this.scene.add(line);
-      }
-      
-      // Líneas de longitud
-      for (let lng = 0; lng < 360; lng += 30) {
-        const geometry = new THREE.BufferGeometry();
-        const points = [];
-        for (let lat = -90; lat <= 90; lat += 5) {
-          const phi = (90 - lat) * (Math.PI / 180);
-          const theta = lng * (Math.PI / 180);
-          const x = 2.01 * Math.sin(phi) * Math.cos(theta);
-          const y = 2.01 * Math.cos(phi);
-          const z = 2.01 * Math.sin(phi) * Math.sin(theta);
-          points.push(x, y, z);
-        }
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-        const line = new THREE.Line(geometry, material);
-        this.scene.add(line);
-      }
-    },
-
     addMapControls() {
       const canvas = this.renderer.domElement;
-      let isDragging = false;
-      let previousMousePosition = { x: 0, y: 0 };
-      
-      canvas.addEventListener('mousedown', (event) => {
-        isDragging = true;
-        previousMousePosition = { x: event.clientX, y: event.clientY };
-      });
-      
-      canvas.addEventListener('mousemove', (event) => {
-        if (isDragging) {
-          const deltaMove = {
-            x: event.clientX - previousMousePosition.x,
-            y: event.clientY - previousMousePosition.y
-          };
-          
-          this.earth.rotation.y += deltaMove.x * 0.01;
-          this.earth.rotation.x += deltaMove.y * 0.01;
-          
-          previousMousePosition = { x: event.clientX, y: event.clientY };
-        }
-      });
-      
-      canvas.addEventListener('mouseup', () => {
-        isDragging = false;
-      });
       
       canvas.addEventListener('click', (event) => {
-        if (!isDragging) {
-          this.handleMapClick(event);
-        }
-      });
-      
-      // Zoom con rueda del ratón
-      canvas.addEventListener('wheel', (event) => {
-        event.preventDefault();
-        this.camera.position.z += event.deltaY * 0.01;
-        this.camera.position.z = Math.max(3, Math.min(10, this.camera.position.z));
+        this.handleMapClick(event);
       });
     },
 
@@ -206,7 +127,7 @@ export default {
       
       const geometry = new THREE.SphereGeometry(0.05, 16, 16);
       const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-      this.marker = new THREE.Mesh(geometry, material);
+      this.marker = markRaw(new THREE.Mesh(geometry, material));
       
       this.marker.position.copy(position);
       this.marker.position.multiplyScalar(1.02); // Elevar ligeramente sobre la superficie
@@ -216,9 +137,17 @@ export default {
 
     animate() {
       requestAnimationFrame(this.animate);
+      
+      // Rotación suave de la Tierra como en earth.vue
       if (this.earth) {
-        this.earth.rotation.y += 0.005;
+        this.earth.rotation.y += 0.01; // MISMA VELOCIDAD QUE EARTH.VUE
       }
+      
+      // Actualizar controles
+      if (this.controls) {
+        this.controls.update();
+      }
+      
       if (this.renderer && this.scene && this.camera) {
         this.renderer.render(this.scene, this.camera);
       }
@@ -233,17 +162,32 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 20px;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
 .world-map {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  position: relative;
+  width: 800px;
+  height: 600px;
+  /* Agregar scroll visible */
+  border: 2px solid #00ff88;
+}
+
+.world-map canvas {
+  display: block;
+  cursor: crosshair;
+  border-radius: 10px;
 }
 
 .map-controls {
   display: flex;
   justify-content: center;
+  margin-top: 10px;
 }
 
 .confirm-button {
