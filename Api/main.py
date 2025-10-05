@@ -1,9 +1,11 @@
+import joblib
 import pandas as pd
 import numpy as np
 import requests
 from fastapi import FastAPI
 from typing import List, Dict, Any
 from functools import lru_cache
+from pathlib import Path  # ✅ faltaba importar
 
 # 1️⃣ Inicializar la aplicación FastAPI
 app = FastAPI(
@@ -14,7 +16,10 @@ app = FastAPI(
 # 🌐 URL del archivo CSV de exoplanetas
 KOI_URL = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+kepoi_name,ra,dec,koi_kepmag+from+cumulative&format=csv"
 
-# 🌐 URL de candidatos (endpoint dado)
+
+labels = {0: "Candidate", 1: "False Positive"}  # Ajusta según tu entrenamiento
+
+# 🌐 URL de candidatos
 CANDIDATE_URL = (
     "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?"
     "table=cumulative&where=koi_disposition%20like%20%27CANDIDATE%27"
@@ -33,10 +38,7 @@ CANDIDATE_URL = (
 
 @lru_cache(maxsize=1)
 def calculate_koi_coordinates() -> pd.DataFrame:
-    """
-    Descarga los datos de KOI, calcula las coordenadas cartesianas (X, Y, Z)
-    y las almacena en caché.
-    """
+    """Descarga datos de KOI, calcula coordenadas cartesianas (X, Y, Z)."""
     print("Iniciando descarga y cálculo de coordenadas de KOI...")
 
     try:
@@ -62,8 +64,7 @@ def calculate_koi_coordinates() -> pd.DataFrame:
 
 @app.get("/api/coordenadas-confirmadas",
          response_model=List[Dict[str, Any]],
-         summary="Obtener coordenadas cartesianas de exoplanetas KOI",
-         description="Descarga datos de KOI, calcula las coordenadas (X, Y, Z) asumiendo r=1, y devuelve una lista de registros.")
+         summary="Obtener coordenadas cartesianas de exoplanetas KOI")
 async def get_koi_coordinates(limit: int = 10) -> List[Dict[str, Any]]:
     df_coordinates = calculate_koi_coordinates()
     if df_coordinates.empty:
@@ -71,14 +72,45 @@ async def get_koi_coordinates(limit: int = 10) -> List[Dict[str, Any]]:
     return df_coordinates.head(limit).to_dict(orient="records")
 
 
-@app.get("/api/exoplanetas-candidatos",
+# 📂 Ruta al modelo entrenado
+MODEL_DIR = Path("./modelo")
+MODEL_PATH = MODEL_DIR / "exoplanet_classifier_model.pkl"
+PREPROCESSOR_PATH = MODEL_DIR / "exoplanet_preprocessor.pkl"
+COLUMNS_PATH = MODEL_DIR / "original_columns.pkl"
+
+model = joblib.load(MODEL_PATH)
+preprocessor = joblib.load(PREPROCESSOR_PATH)
+required_columns = joblib.load(COLUMNS_PATH)
+
+print("✅ Modelo, preprocesador y columnas cargados correctamente")
+
+
+# 🔮 Función para predecir con el modelo ML
+def predict_with_pipeline(features: dict):
+    """Preprocesa y predice si un candidato es exoplaneta válido."""
+    row = {col: features.get(col, None) for col in required_columns}
+    df = pd.DataFrame([row])
+
+    # Preprocesamiento
+    X_processed = preprocessor.transform(df)
+
+    # Predicción
+    prediction = model.predict(X_processed)[0]
+
+    prob = None
+    if hasattr(model, "predict_proba"):
+        prob = model.predict_proba(X_processed).max()
+
+    return {
+        "prediction": labels[prediction],
+        "probability": float(prob) if prob is not None else None
+    }
+
+
+@app.get("/api/exoplanetas-candidatos-ml",
          response_model=List[Dict[str, Any]],
-         summary="Obtener exoplanetas candidatos con coordenadas cartesianas",
-         description="Consume el endpoint de NASA, añade coordenadas cartesianas (X, Y, Z) y devuelve el JSON extendido.")
-async def get_exoplanet_candidates(limit: int = 10) -> List[Dict[str, Any]]:
-    """
-    Endpoint para obtener candidatos a exoplanetas con sus coordenadas (X, Y, Z).
-    """
+         summary="Exoplanetas candidatos con coordenadas y predicción ML")
+async def get_exoplanet_candidates_ml(limit: int = 5) -> List[Dict[str, Any]]:
     try:
         response = requests.get(CANDIDATE_URL)
         response.raise_for_status()
@@ -87,18 +119,39 @@ async def get_exoplanet_candidates(limit: int = 10) -> List[Dict[str, Any]]:
         print(f"Error al obtener datos de candidatos: {e}")
         return []
 
-    df = pd.DataFrame(data)
-    if df.empty or "ra" not in df or "dec" not in df:
-        return []
+    results = []
 
-    # Conversión a radianes
-    ra_rad = np.deg2rad(df['ra'])
-    dec_rad = np.deg2rad(df['dec'])
-    r = 1.0
+    for planet in data[:limit]:
+        kepid = planet.get("kepid")
+        kepoi_name = planet.get("kepoi_name")
+        ra = planet.get("ra")
+        dec = planet.get("dec")
 
-    # Cálculo de coordenadas cartesianas
-    df['X'] = r * np.cos(dec_rad) * np.cos(ra_rad)
-    df['Y'] = r * np.cos(dec_rad) * np.sin(ra_rad)
-    df['Z'] = r * np.sin(dec_rad)
+        # --- Calcular coordenadas cartesianas
+        if ra is not None and dec is not None:
+            ra_rad = np.deg2rad(ra)
+            dec_rad = np.deg2rad(dec)
+            r = 1.0
+            X = r * np.cos(dec_rad) * np.cos(ra_rad)
+            Y = r * np.cos(dec_rad) * np.sin(ra_rad)
+            Z = r * np.sin(dec_rad)
+        else:
+            X, Y, Z = None, None, None
 
-    return df.head(limit).to_dict(orient="records")
+        # --- Features para el modelo
+        features = {k: v for k, v in planet.items()
+                    if k not in ["kepid", "kepoi_name", "ra_str", "dec_str"]}
+
+        # --- Predicción con el modelo
+        ml_result = predict_with_pipeline(features)
+
+        results.append({
+            "kepid": kepid,
+            "kepoi_name": kepoi_name,
+            "X": X,
+            "Y": Y,
+            "Z": Z,
+            "ml_result": ml_result
+        })
+
+    return results
