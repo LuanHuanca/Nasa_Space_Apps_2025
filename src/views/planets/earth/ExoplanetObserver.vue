@@ -13,7 +13,7 @@
     <div v-if="currentStep === 1" class="step-container">
       <div class="instruction-panel">
         <h2>Paso 1: Selecciona tu ubicación en la Tierra</h2>
-        <p>Haz clic en cualquier punto del mapa para establecer tu posición de observación:</p>
+        <p>Haz clic en cualquier punto del mapa para establecer tu posición de 22observación:</p>
       </div>
       
       <div class="map-container">

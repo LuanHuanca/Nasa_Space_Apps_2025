@@ -57,6 +57,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router"; // Importar el router
+import { ExoplanetAPIService } from '@/services/ExoplanetAPIService.js'; // Servicio de API
 
 // Importar las texturas de los planetas
 import mercurioTexture from "@/assets/mercurio.jpg";
@@ -96,6 +97,9 @@ export default {
     let mouseX = 0, mouseY = 0;
     let windowHalfX = window.innerWidth / 2;
     let windowHalfY = window.innerHeight / 2;
+
+    // Instancia del servicio de API
+    const exoplanetAPI = new ExoplanetAPIService();
 
     // Función para regresar a la página anterior
     const goBack = () => {
@@ -163,11 +167,10 @@ export default {
       }
     };
 
-    const addStars = () => {
-      // Crear el fondo de estrellas con partículas dinámicas
+    const addStars = async () => {
+      // Crear el fondo de estrellas con partículas dinámicas usando coordenadas reales
       const geometry = new THREE.BufferGeometry();
-      const vertices = [];
-
+      
       // Crear una textura simple para las partículas (un círculo blanco)
       const canvas = document.createElement('canvas');
       canvas.width = 64;
@@ -185,16 +188,35 @@ export default {
       
       const sprite = new THREE.CanvasTexture(canvas);
 
-      // Generar partículas para las estrellas
-      for (let i = 0; i < 1000; i++) {
-        const x = 2000 * Math.random() - 1000;
-        const y = 2000 * Math.random() - 1000;
-        const z = 2000 * Math.random() - 1000;
+      try {
+        console.log('🔄 Obteniendo coordenadas reales de exoplanetas...');
+        
+        // Obtener coordenadas reales de exoplanetas desde la API
+        const vertices = await exoplanetAPI.getStarParticleCoordinates(1000);
+        
+        if (vertices.length === 0) {
+          throw new Error('No se obtuvieron coordenadas válidas');
+        }
 
-        vertices.push(x, y, z);
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        
+        console.log(`✅ Estrellas creadas con coordenadas reales: ${vertices.length / 3} partículas`);
+        
+      } catch (error) {
+        console.error('❌ Error al cargar coordenadas reales, usando respaldo:', error);
+        
+        // Generar partículas de respaldo si la API falla
+        const fallbackVertices = [];
+        for (let i = 0; i < 800; i++) {
+          const x = 2000 * Math.random() - 1000;
+          const y = 2000 * Math.random() - 1000;
+          const z = 2000 * Math.random() - 1000;
+          fallbackVertices.push(x, y, z);
+        }
+        
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(fallbackVertices, 3));
+        console.log('🔄 Usando partículas de respaldo');
       }
-
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
       // Material para las partículas con cambio de color dinámico
       const starsMaterial = new THREE.PointsMaterial({
@@ -214,7 +236,7 @@ export default {
       scene.userData.starsMaterial = starsMaterial;
     };
 
-    const initScene = () => {
+    const initScene = async () => {
       // Crear escena y cámara
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(
@@ -287,8 +309,8 @@ export default {
       //addComets();
       //addAsteroids();
 
-      // Añadir estrellas
-      addStars();
+      // Añadir estrellas (ahora es asíncrono)
+      await addStars();
     };
 
     const onWindowResize = () => {
@@ -652,9 +674,9 @@ const navigateToPlanet = () => {
       renderer.render(scene, camera); // Renderizar la escena
     };
 
-    onMounted(() => {
+    onMounted(async () => {
       showModal.value = true; // Asegurarse de que el modal esté activo al montar la página
-      initScene();
+      await initScene();
       addPlanets();
       animate();
 
