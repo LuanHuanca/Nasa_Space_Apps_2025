@@ -172,10 +172,8 @@ export default {
   align-items: center;
   flex-direction: column;
   width: 100%;
-  min-height: 700px;
   background: radial-gradient(circle at center, #0a1a2f, #020c1b);
   overflow: hidden;
-  padding: 20px;
 }
 
 /* Contenedor del mapa */

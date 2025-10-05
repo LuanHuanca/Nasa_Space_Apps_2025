@@ -323,8 +323,6 @@ export default {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  width: 100%;
-  height: 100%;
   border: 2px solid #4a90e2;
   position: relative;
   /* PREPARADO: Para imagen de fondo */

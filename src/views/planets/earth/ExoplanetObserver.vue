@@ -583,12 +583,7 @@ export default {
 </script>
 
 <style scoped>
-#exoplanet-observer {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #001122 0%, #003366 100%);
-  color: white;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+
 
 .header {
   display: flex;

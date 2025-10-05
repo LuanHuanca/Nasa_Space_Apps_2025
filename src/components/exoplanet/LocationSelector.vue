@@ -47,7 +47,6 @@ export default {
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  gap: 30px;
 }
 
 .map-container {
@@ -55,13 +54,9 @@ export default {
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  width: 100%;
   max-width: 1000px;
-  /* Centrar mejor el contenido */
   margin: 0 auto;
   padding: 20px;
-  background: rgba(0, 20, 40, 0.8);
   border-radius: 15px;
-  border: 1px solid #4a90e2;
 }
 </style>
