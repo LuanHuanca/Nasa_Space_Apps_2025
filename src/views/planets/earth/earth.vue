@@ -3,6 +3,7 @@
     <header class="header-planeta">
       <button class="nav-button" @click="goBack">⬅ Atrás</button>
       <h1>Planeta: Tierra</h1>
+
       <div class="header-buttons">
         <button class="nav-button" @click="toggleRotation">{{
             isRotating ? 'Detener Rotación' : 'Reanudar Rotación'

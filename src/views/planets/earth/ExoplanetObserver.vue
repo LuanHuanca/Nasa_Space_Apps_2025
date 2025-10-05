@@ -15,13 +15,13 @@
         <h2>Paso 1: Selecciona tu ubicación en la Tierra</h2>
         <p>Haz clic en cualquier punto del mapa para establecer tu posición de 22observación:</p>
       </div>
-      
+
       <div class="map-container">
         <div ref="worldMap" class="world-map"></div>
         <div class="map-controls">
-          <button 
-            v-if="selectedLocation" 
-            @click="confirmLocation" 
+          <button
+            v-if="selectedLocation"
+            @click="confirmLocation"
             class="confirm-button"
           >
             ✅ Confirmar Ubicación
@@ -43,7 +43,7 @@
 
       <div class="horizon-container">
         <div ref="horizonView" class="horizon-view"></div>
-        
+
         <!-- Panel de información de exoplanetas -->
         <div class="exoplanet-info-panel">
           <h3>Exoplanetas Visibles</h3>
@@ -51,8 +51,8 @@
             🔭 No hay exoplanetas visibles desde esta ubicación en este momento.
           </div>
           <div v-else class="exoplanet-list">
-            <div 
-              v-for="(exoplanet, index) in detectedExoplanets" 
+            <div
+              v-for="(exoplanet, index) in detectedExoplanets"
               :key="index"
               class="exoplanet-item"
               @click="focusOnExoplanet(exoplanet)"
@@ -70,6 +70,7 @@
       <div class="controls">
         <button @click="goBackToMap" class="secondary-button">🗺️ Cambiar Ubicación</button>
         <button @click="refreshExoplanets" class="primary-button">🔄 Actualizar Observación</button>
+        <button @click="goAddExoplanet" class="primary-button">🔄 Consultar Nuevo Exoplaneta </button>
       </div>
     </div>
   </div>
@@ -141,59 +142,59 @@ export default {
     goBack() {
       this.$router.go(-1);
     },
-    
+
     initWorldMap() {
       // Crear el mapa mundial con Three.js
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000);
       const renderer = new THREE.WebGLRenderer({ antialias: true });
-      
+
       renderer.setSize(800, 600);
       renderer.setClearColor(0x001122);
       this.$refs.worldMap.appendChild(renderer.domElement);
-      
+
       // Crear una esfera para representar la Tierra
       const geometry = new THREE.SphereGeometry(2, 64, 64);
       const textureLoader = new THREE.TextureLoader();
-      
+
       // Crear material con color azul-verde para simular la Tierra
       const material = new THREE.MeshPhongMaterial({
         color: 0x4a90e2,
         shininess: 100
       });
-      
+
       const earth = new THREE.Mesh(geometry, material);
       scene.add(earth);
-      
+
       // Agregar líneas de latitud y longitud
       this.addGridLines(scene);
-      
+
       // Iluminación
       const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
       scene.add(ambientLight);
-      
+
       const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
       directionalLight.position.set(5, 5, 5);
       scene.add(directionalLight);
-      
+
       camera.position.z = 5;
-      
+
       // Agregar controles de ratón
       this.addMapControls(renderer.domElement, camera, earth);
-      
+
       const animate = () => {
         requestAnimationFrame(animate);
         earth.rotation.y += 0.005;
         renderer.render(scene, camera);
       };
       animate();
-      
+
       this.worldMap = { scene, camera, renderer, earth };
     },
-    
+
     addGridLines(scene) {
       const material = new THREE.LineBasicMaterial({ color: 0x888888 });
-      
+
       // Líneas de latitud
       for (let lat = -80; lat <= 80; lat += 20) {
         const geometry = new THREE.BufferGeometry();
@@ -210,7 +211,7 @@ export default {
         const line = new THREE.Line(geometry, material);
         scene.add(line);
       }
-      
+
       // Líneas de longitud
       for (let lng = 0; lng < 360; lng += 30) {
         const geometry = new THREE.BufferGeometry();
@@ -228,40 +229,40 @@ export default {
         scene.add(line);
       }
     },
-    
+
     addMapControls(canvas, camera, earth) {
       let isDragging = false;
       let previousMousePosition = { x: 0, y: 0 };
-      
+
       canvas.addEventListener('mousedown', (event) => {
         isDragging = true;
         previousMousePosition = { x: event.clientX, y: event.clientY };
       });
-      
+
       canvas.addEventListener('mousemove', (event) => {
         if (isDragging) {
           const deltaMove = {
             x: event.clientX - previousMousePosition.x,
             y: event.clientY - previousMousePosition.y
           };
-          
+
           earth.rotation.y += deltaMove.x * 0.01;
           earth.rotation.x += deltaMove.y * 0.01;
-          
+
           previousMousePosition = { x: event.clientX, y: event.clientY };
         }
       });
-      
+
       canvas.addEventListener('mouseup', () => {
         isDragging = false;
       });
-      
+
       canvas.addEventListener('click', (event) => {
         if (!isDragging) {
           this.handleMapClick(event, canvas, camera, earth);
         }
       });
-      
+
       // Zoom con rueda del ratón
       canvas.addEventListener('wheel', (event) => {
         event.preventDefault();
@@ -269,49 +270,49 @@ export default {
         camera.position.z = Math.max(3, Math.min(10, camera.position.z));
       });
     },
-    
+
     handleMapClick(event, canvas, camera, earth) {
       const rect = canvas.getBoundingClientRect();
       const mouse = new THREE.Vector2();
       mouse.x = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
       mouse.y = -((event.clientY - rect.top) / canvas.height) * 2 + 1;
-      
+
       const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(mouse, camera);
-      
+
       const intersects = raycaster.intersectObject(earth);
-      
+
       if (intersects.length > 0) {
         const intersectionPoint = intersects[0].point;
-        
+
         // Convertir punto 3D a coordenadas lat/lng
         const lat = Math.asin(intersectionPoint.y / 2) * (180 / Math.PI);
         const lng = Math.atan2(intersectionPoint.z, intersectionPoint.x) * (180 / Math.PI);
-        
+
         this.selectedLocation = { lat, lng };
-        
+
         // Crear marcador visual
         this.addLocationMarker(intersectionPoint);
       }
     },
-    
+
     addLocationMarker(position) {
       // Remover marcador anterior si existe
       if (this.worldMap.marker) {
         this.worldMap.scene.remove(this.worldMap.marker);
       }
-      
+
       const geometry = new THREE.SphereGeometry(0.05, 16, 16);
       const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
       const marker = new THREE.Mesh(geometry, material);
-      
+
       marker.position.copy(position);
       marker.position.multiplyScalar(1.02); // Elevar ligeramente sobre la superficie
-      
+
       this.worldMap.scene.add(marker);
       this.worldMap.marker = marker;
     },
-    
+
     confirmLocation() {
       this.currentStep = 2;
       this.$nextTick(() => {
@@ -319,45 +320,45 @@ export default {
         this.calculateVisibleExoplanets();
       });
     },
-    
+
     initHorizonView() {
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(75, 800 / 400, 0.1, 1000);
       const renderer = new THREE.WebGLRenderer({ antialias: true });
-      
+
       renderer.setSize(800, 400);
       renderer.setClearColor(0x000033);
       this.$refs.horizonView.appendChild(renderer.domElement);
-      
+
       // Crear el horizonte (semi-esfera)
       this.createHorizonSphere(scene);
-      
+
       // Crear las secciones del cielo
       this.createSkySections(scene);
-      
+
       // Agregar estrellas de fondo
       this.addBackgroundStars(scene);
-      
+
       camera.position.set(0, 0, 0);
-      
+
       // Controles de cámara para mirar alrededor
       this.addHorizonControls(renderer.domElement, camera);
-      
+
       const animate = () => {
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
       };
       animate();
-      
+
       this.horizonScene = scene;
       this.horizonCamera = camera;
       this.horizonRenderer = renderer;
     },
-    
+
     createHorizonSphere(scene) {
       const geometry = new THREE.SphereGeometry(50, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-      const material = new THREE.MeshBasicMaterial({ 
-        color: 0x87CEEB, 
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x87CEEB,
         side: THREE.BackSide,
         transparent: true,
         opacity: 0.3
@@ -365,11 +366,11 @@ export default {
       const horizon = new THREE.Mesh(geometry, material);
       scene.add(horizon);
     },
-    
+
     createSkySections(scene) {
       // Crear líneas divisorias para las secciones del cielo
       const material = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
-      
+
       // Líneas de azimut (direcciones cardinales)
       for (let azimuth = 0; azimuth < 360; azimuth += 45) {
         const geometry = new THREE.BufferGeometry();
@@ -384,7 +385,7 @@ export default {
         const line = new THREE.Line(geometry, material);
         scene.add(line);
       }
-      
+
       // Líneas de elevación
       for (let elevation = 15; elevation <= 75; elevation += 15) {
         const geometry = new THREE.BufferGeometry();
@@ -400,11 +401,11 @@ export default {
         scene.add(line);
       }
     },
-    
+
     addBackgroundStars(scene) {
       const starGeometry = new THREE.BufferGeometry();
       const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
-      
+
       const starVertices = [];
       for (let i = 0; i < 1000; i++) {
         const x = (Math.random() - 0.5) * 200;
@@ -412,92 +413,92 @@ export default {
         const z = (Math.random() - 0.5) * 200;
         starVertices.push(x, y, z);
       }
-      
+
       starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
       const stars = new THREE.Points(starGeometry, starMaterial);
       scene.add(stars);
     },
-    
+
     addHorizonControls(canvas, camera) {
       let isLooking = false;
       let phi = 0;
       let theta = 0;
-      
+
       canvas.addEventListener('mousedown', () => {
         isLooking = true;
       });
-      
+
       canvas.addEventListener('mousemove', (event) => {
         if (isLooking) {
           phi -= event.movementX * 0.01;
           theta = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, theta - event.movementY * 0.01));
-          
+
           camera.rotation.x = theta;
           camera.rotation.y = phi;
         }
       });
-      
+
       canvas.addEventListener('mouseup', () => {
         isLooking = false;
       });
     },
-    
+
     calculateVisibleExoplanets() {
       // Algoritmo simulado para calcular exoplanetas visibles basado en la ubicación
       this.detectedExoplanets = [];
-      
+
       const { lat, lng } = this.selectedLocation;
-      
+
       this.exoplanetDatabase.forEach(exoplanet => {
         // Simulación: la visibilidad depende de la latitud y longitud
         const latFactor = Math.sin((lat * Math.PI) / 180);
         const lngFactor = Math.cos((lng * Math.PI) / 180);
-        
+
         // Algoritmo básico de visibilidad (esto sería mucho más complejo en realidad)
         const visibility = Math.random() > 0.3; // 70% de probabilidad de visibilidad
-        
+
         if (visibility) {
           const direction = (exoplanet.baseDirection + lng + Math.random() * 60 - 30) % 360;
           const elevation = Math.max(5, Math.min(85, exoplanet.baseElevation + latFactor * 30 + Math.random() * 20 - 10));
-          
+
           this.detectedExoplanets.push({
             ...exoplanet,
             direction: Math.round(direction),
             elevation: Math.round(elevation)
           });
-          
+
           // Agregar marcador visual en el horizonte
           this.addExoplanetMarker(direction, elevation, exoplanet.name);
         }
       });
     },
-    
+
     addExoplanetMarker(direction, elevation, name) {
       if (!this.horizonScene) return;
-      
+
       const phi = (direction * Math.PI) / 180;
       const theta = (elevation * Math.PI) / 180;
-      
+
       const x = 40 * Math.cos(theta) * Math.cos(phi);
       const y = 40 * Math.sin(theta);
       const z = 40 * Math.cos(theta) * Math.sin(phi);
-      
+
       // Crear marcador del exoplaneta
       const geometry = new THREE.SphereGeometry(0.8, 16, 16);
-      const material = new THREE.MeshBasicMaterial({ 
+      const material = new THREE.MeshBasicMaterial({
         color: 0x00ff88,
         transparent: true,
         opacity: 0.8
       });
       const marker = new THREE.Mesh(geometry, material);
       marker.position.set(x, y, z);
-      
+
       // Agregar efecto de pulsación
       marker.userData = { name, originalScale: 1 };
       marker.scale.setScalar(1);
-      
+
       this.horizonScene.add(marker);
-      
+
       // Animación de pulsación
       const pulsate = () => {
         const time = Date.now() * 0.005;
@@ -506,18 +507,22 @@ export default {
       };
       pulsate();
     },
-    
+
+    goAddExoplanet() {
+      this.$router.push('/earth/exoplanet-add');
+    },
+
     goBackToMap() {
       this.currentStep = 1;
       this.selectedLocation = null;
       this.detectedExoplanets = [];
-      
+
       if (this.horizonRenderer) {
         this.horizonRenderer.dispose();
         this.$refs.horizonView.innerHTML = '';
       }
     },
-    
+
     refreshExoplanets() {
       // Limpiar marcadores existentes
       if (this.horizonScene) {
@@ -529,27 +534,27 @@ export default {
         });
         markersToRemove.forEach(marker => this.horizonScene.remove(marker));
       }
-      
+
       // Recalcular exoplanetas visibles
       this.calculateVisibleExoplanets();
     },
-    
+
     focusOnExoplanet(exoplanet) {
       if (!this.horizonCamera) return;
-      
+
       const phi = (exoplanet.direction * Math.PI) / 180;
       const theta = (exoplanet.elevation * Math.PI) / 180;
-      
+
       // Animar la cámara hacia el exoplaneta
       this.horizonCamera.rotation.y = phi;
       this.horizonCamera.rotation.x = theta - Math.PI / 2;
-      
+
       alert(`Enfocando en ${exoplanet.name}\nDirección: ${exoplanet.direction}°\nElevación: ${exoplanet.elevation}°`);
     },
-    
+
     getLocationName() {
       if (!this.selectedLocation) return 'Ubicación no seleccionada';
-      
+
       const { lat, lng } = this.selectedLocation;
       return `${lat.toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${lng.toFixed(2)}°${lng >= 0 ? 'E' : 'W'}`;
     }
