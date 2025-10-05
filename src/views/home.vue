@@ -766,14 +766,14 @@ const navigateToPlanet = () => {
 
 .modal-overlay {
   position: fixed;
-  top: 50px; /* Ajustar el cuadro emergente debajo de la barra superior */
+  top: 0;
   left: 0;
   width: 100vw;
-  height: calc(100vh - 50px); /* Ajustar la altura para evitar que se desborde */
-  background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro semitransparente */
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* Alinear en la parte superior */
+  align-items: center; /* Centrar verticalmente */
   z-index: 1000;
 }
 

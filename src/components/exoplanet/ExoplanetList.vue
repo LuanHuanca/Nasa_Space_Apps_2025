@@ -64,7 +64,7 @@ export default {
   methods: {
     getHabitabilityColor(habitability) {
       // Retorna un color basado en el porcentaje de habitabilidad
-      if (habitability >= 80) return '#00ff88'; // Verde para alta habitabilidad
+      if (habitability >= 80) return '#4a90e2'; // Azul para alta habitabilidad
       if (habitability >= 60) return '#ffaa00'; // Naranja para habitabilidad media
       if (habitability >= 40) return '#ff6b35'; // Rojo-naranja para habitabilidad baja
       return '#ff4444'; // Rojo para habitabilidad muy baja
@@ -90,8 +90,8 @@ export default {
 
 .exoplanet-info-panel h3 {
   margin-top: 0;
-  color: #00ff88;
-  border-bottom: 2px solid #00ff88;
+  color: #4a90e2;
+  border-bottom: 2px solid #4a90e2;
   padding-bottom: 10px;
 }
 

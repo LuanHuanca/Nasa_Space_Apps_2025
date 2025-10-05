@@ -5,21 +5,30 @@
     </button>
     <h1>🌌 Observador de Exoplanetas</h1>
     <div class="coordinates" v-if="selectedLocation">
-      📍 Lat: {{ selectedLocation.lat.toFixed(4) }}°, Lng: {{ selectedLocation.lng.toFixed(4) }}°
+      📍 Lat: {{ selectedLocation.lat.toFixed(4) }}°, Lng:
+      {{ selectedLocation.lng.toFixed(4) }}°
     </div>
+    <button @click="goAddExoplanet" class="primary-button">
+      🔄 Consultar Nuevo Exoplaneta
+    </button>
   </header>
 </template>
 
 <script>
 export default {
-  name: 'HeaderComponent',
+  name: "HeaderComponent",
   props: {
     selectedLocation: {
       type: Object,
-      default: null
-    }
+      default: null,
+    },
   },
-  emits: ['go-back']
+  emits: ["go-back"],
+  methods: {
+    goAddExoplanet() {
+      this.$router.push('/earth/exoplanet-add');
+    }
+  }
 };
 </script>
 

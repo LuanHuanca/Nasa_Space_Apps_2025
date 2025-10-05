@@ -1,14 +1,22 @@
 <template>
-  <div class="world-map-component">
-    <div ref="worldMapContainer" class="world-map"></div>
-    <div class="map-controls">
+  <div class="world-map-component" style="position: relative;">
+    <!-- Tarjeta del mundo - intacta -->
+    <div class="map-container">
+      <div ref="worldMapContainer" class="world-map"></div>
+    </div>
+    
+    <!-- Botón lateral flotante - separado de la tarjeta -->
+    <div v-if="selectedLocation" class="floating-controls">
       <button 
-        v-if="selectedLocation" 
         @click="$emit('confirm-location')" 
         class="confirm-button"
       >
         ✅ Confirmar Ubicación
       </button>
+      <div class="location-info">
+        <p><strong>Lat:</strong> {{ selectedLocation.lat.toFixed(2) }}°</p>
+        <p><strong>Lng:</strong> {{ selectedLocation.lng.toFixed(2) }}°</p>
+      </div>
     </div>
   </div>
 </template>
@@ -158,53 +166,113 @@ export default {
 
 <style scoped>
 .world-map-component {
+  position: relative;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 20px;
+  flex-direction: column;
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
+  min-height: 700px;
+  background: radial-gradient(circle at center, #0a1a2f, #020c1b);
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* Contenedor del mapa */
+.map-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .world-map {
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  position: relative;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  border: 2px solid #2e6eb5;
   width: 800px;
   height: 600px;
-  /* Agregar scroll visible */
-  border: 2px solid #00ff88;
+  position: relative;
+  background: rgba(0, 10, 25, 0.4);
 }
 
 .world-map canvas {
   display: block;
   cursor: crosshair;
-  border-radius: 10px;
+  border-radius: 12px;
+  z-index: 0;
 }
 
-.map-controls {
+/* Panel flotante lateral */
+.floating-controls {
+  position: absolute;
+  top: 50%;
+  right: 40px;
+  transform: translateY(-50%);
   display: flex;
-  justify-content: center;
-  margin-top: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 20px;
+  background: rgba(10, 20, 40, 0.85);
+  border-radius: 12px;
+  border: 1px solid #4a90e2;
+  box-shadow: 0 0 20px rgba(74, 144, 226, 0.2);
+  color: #e0f0ff;
+  z-index: 5;
+  width: 240px;
 }
 
-.confirm-button {
-  padding: 12px 24px;
-  border: none;
+/* Información de coordenadas */
+.location-info {
+  width: 100%;
+  background: rgba(20, 30, 50, 0.8);
+  padding: 12px 15px;
   border-radius: 8px;
-  font-size: 1em;
+  font-size: 0.9rem;
+  border-left: 3px solid #4a90e2;
+}
+
+/* Botón de confirmación */
+.confirm-button {
+  align-self: center;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #4a90e2, #2e6eb5);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-weight: 600;
-  background-color: #00ff88;
-  color: #001122;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.4);
 }
 
 .confirm-button:hover {
-  background-color: #00cc6a;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+  background: linear-gradient(135deg, #2e6eb5, #1f4c82);
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(74, 144, 226, 0.6);
+}
+
+/* Adaptación responsive */
+@media (max-width: 1000px) {
+  .floating-controls {
+    position: static;
+    transform: none;
+    margin-top: 20px;
+    width: 90%;
+    max-width: 400px;
+  }
+
+  .world-map {
+    width: 90vw;
+    height: calc(90vw * 0.75);
+  }
+
+  .confirm-button {
+    width: 100%;
+  }
 }
 </style>

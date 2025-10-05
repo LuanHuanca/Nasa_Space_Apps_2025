@@ -122,7 +122,7 @@ export default {
 }
 
 .primary-button {
-  background-color: #00ff88;
+  background: linear-gradient(135deg, #4a90e2, #357abd);
   color: #001122;
 }
 

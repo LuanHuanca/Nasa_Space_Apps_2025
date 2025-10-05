@@ -7,7 +7,7 @@
 <script>
 import { markRaw } from 'vue';
 import * as THREE from 'three';
-import earthTexture from '@/assets/earth.jpg';
+import praderaTexture from '@/assets/pradera.jpg';
 
 export default {
   name: 'HorizonViewer',
@@ -80,12 +80,29 @@ export default {
 
     createHorizonSphere() {
       const geometry = new THREE.SphereGeometry(50, 64, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-      const material = new THREE.MeshBasicMaterial({ 
-        color: 0x87CEEB, 
+      
+      // NUEVO: Preparado para imagen de fondo
+      let material;
+      
+      // // Opción 1: Color sólido (actual)
+      material = new THREE.MeshBasicMaterial({ 
+        color: 0x4169e1, // Azul real más suave
         side: THREE.BackSide,
         transparent: true,
-        opacity: 0.3
+        opacity: 0.4
       });
+      
+      // Opción 2: Imagen de fondo (descomenta las siguientes líneas y comenta las anteriores)
+      
+      // const textureLoader = new THREE.TextureLoader();
+      // material = new THREE.MeshBasicMaterial({
+      //   map: textureLoader.load(praderaTexture), // Tu imagen de fondo
+      //   side: THREE.BackSide,
+      //   transparent: true,
+      //   opacity: 0.8
+      // });  
+      
+      
       const horizon = new THREE.Mesh(geometry, material);
       this.scene.add(horizon);
     },
@@ -94,7 +111,7 @@ export default {
       // Crear un plano circular verde como suelo - MAS VISIBLE
       const groundGeometry = new THREE.CircleGeometry(50, 64);
       const groundMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x228B22, // Verde más brillante y visible
+        map: new THREE.TextureLoader().load(praderaTexture), // Textura de suelo
         side: THREE.DoubleSide,
         transparent: false, // Sin transparencia para mejor visibilidad
         opacity: 1.0
@@ -308,8 +325,14 @@ export default {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   width: 100%;
   height: 100%;
-  border: 2px solid #00ff88;
+  border: 2px solid #4a90e2;
   position: relative;
+  /* PREPARADO: Para imagen de fondo */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* Descomenta la siguiente línea y agrega tu imagen:
+  background-image: url('@/assets/tu-imagen-fondo.jpg'); */
 }
 
 .horizon-view canvas {
@@ -319,7 +342,7 @@ export default {
 }
 
 .horizon-view:hover {
-  border-color: #00cc6a;
-  box-shadow: 0 8px 32px rgba(0, 255, 136, 0.2);
+  border-color: #357abd;
+  box-shadow: 0 8px 32px rgba(74, 144, 226, 0.3);
 }
 </style>

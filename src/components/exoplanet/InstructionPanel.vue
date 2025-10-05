@@ -52,6 +52,6 @@ export default {
   padding: 15px;
   border-radius: 8px;
   margin-top: 15px;
-  border-left: 4px solid #00ff88;
+  border-left: 4px solid #4a90e2;
 }
 </style>

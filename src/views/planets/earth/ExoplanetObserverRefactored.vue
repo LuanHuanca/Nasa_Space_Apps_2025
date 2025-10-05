@@ -159,7 +159,7 @@ export default {
 
     // Navegación
     goBack() {
-      this.$router.go(-1);
+      this.$router.push('/planets/tierra');
     },
 
     // Manejo de eventos del LocationSelector
