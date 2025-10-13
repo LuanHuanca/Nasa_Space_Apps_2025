@@ -59,14 +59,23 @@ export default {
   },
   methods: {
     initWorldMap() {
-      // IMPLEMENTACION EXACTA DE EARTH.VUE
+      // IMPLEMENTACION EXACTA DE EARTH.VUE CON RESPONSIVE
+      const container = this.$refs.worldMapContainer;
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      
+      // Dimensiones responsive
+      const width = containerWidth > 0 ? containerWidth : 800;
+      const height = containerHeight > 0 ? containerHeight : 600;
+      
       this.scene = markRaw(new THREE.Scene());
-      this.camera = markRaw(new THREE.PerspectiveCamera(75, 800 / 600, 0.1, 1000));
+      this.camera = markRaw(new THREE.PerspectiveCamera(75, width / height, 0.1, 1000));
       this.camera.position.z = 5;
 
       this.renderer = markRaw(new THREE.WebGLRenderer({ alpha: true }));
-      this.renderer.setSize(800, 600);
-      this.$refs.worldMapContainer.appendChild(this.renderer.domElement);
+      this.renderer.setSize(width, height);
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimización móvil
+      container.appendChild(this.renderer.domElement);
 
       // Crear la esfera de la Tierra EXACTAMENTE como en earth.vue
       const earthGeometry = new THREE.SphereGeometry(2, 32, 32); // Escalado para el mapa
@@ -87,6 +96,9 @@ export default {
 
       // Controles para colocar pin
       this.addMapControls();
+      
+      // Manejar resize responsive
+      this.addResizeHandler();
 
       // Iniciar animación
       this.animate();
@@ -159,6 +171,33 @@ export default {
       if (this.renderer && this.scene && this.camera) {
         this.renderer.render(this.scene, this.camera);
       }
+    },
+
+    addResizeHandler() {
+      const handleResize = () => {
+        const container = this.$refs.worldMapContainer;
+        if (container && this.renderer && this.camera) {
+          const width = container.clientWidth;
+          const height = container.clientHeight;
+          
+          // Actualizar cámara
+          this.camera.aspect = width / height;
+          this.camera.updateProjectionMatrix();
+          
+          // Actualizar renderer
+          this.renderer.setSize(width, height);
+          this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        }
+      };
+      
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', handleResize);
+      
+      // Limpiar listeners en unmount
+      this.$once('hook:beforeUnmount', () => {
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleResize);
+      });
     }
   }
 };
@@ -254,23 +293,121 @@ export default {
   box-shadow: 0 8px 25px rgba(74, 144, 226, 0.6);
 }
 
-/* Adaptación responsive */
-@media (max-width: 1000px) {
+/* Adaptación responsive completa */
+@media (max-width: 1200px) {
   .floating-controls {
     position: static;
     transform: none;
     margin-top: 20px;
     width: 90%;
     max-width: 400px;
+    align-self: center;
   }
+  
+  .world-map-component {
+    flex-direction: column;
+    align-items: center;
+  }
+}
 
+@media (max-width: 900px) {
   .world-map {
     width: 90vw;
     height: calc(90vw * 0.75);
+    max-width: 600px;
+    max-height: 450px;
   }
-
+  
+  .floating-controls {
+    width: 90vw;
+    max-width: 600px;
+    padding: 15px;
+  }
+  
   .confirm-button {
     width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
+  }
+  
+  .location-info {
+    text-align: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .world-map {
+    width: 95vw;
+    height: calc(95vw * 0.75);
+    border-width: 1px;
+  }
+  
+  .world-map-component {
+    padding: 10px;
+    min-height: auto;
+  }
+  
+  .floating-controls {
+    width: 95vw;
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .confirm-button {
+    padding: 12px;
+    font-size: 1rem;
+  }
+  
+  .location-info {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+  
+  .location-info p {
+    margin: 3px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .world-map {
+    width: 98vw;
+    height: calc(98vw * 0.75);
+  }
+  
+  .floating-controls {
+    width: 98vw;
+    padding: 10px;
+  }
+  
+  .confirm-button {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+  
+  .location-info {
+    font-size: 0.8rem;
+  }
+}
+
+/* Orientación horizontal */
+@media (max-height: 500px) and (orientation: landscape) {
+  .world-map {
+    height: 70vh;
+    width: auto;
+    max-width: 90vw;
+  }
+  
+  .world-map-component {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .floating-controls {
+    position: static;
+    transform: none;
+    width: 250px;
+    height: fit-content;
   }
 }
 </style>

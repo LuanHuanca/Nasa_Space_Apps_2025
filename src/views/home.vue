@@ -864,4 +864,192 @@ button {
 button:hover {
   background-color: #0056b3;
 }
+
+/* ========================================= */
+/* RESPONSIVE DESIGN PARA DISPOSITIVOS MÓVILES */
+/* ========================================= */
+
+/* Tablets y pantallas medianas */
+@media (max-width: 1024px) {
+  .top-bar {
+    height: auto;
+    min-height: 60px;
+    flex-wrap: wrap;
+    padding: 10px 15px;
+  }
+  
+  .top-bar h1 {
+    font-size: 1.3rem;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  
+  .control-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .canvas-container {
+    margin-top: 80px !important;
+  }
+  
+  .info-panel {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    max-width: none;
+    padding: 15px;
+  }
+}
+
+/* Smartphones */
+@media (max-width: 768px) {
+  .top-bar {
+    padding: 8px 10px;
+    min-height: 70px;
+  }
+  
+  .top-bar h1 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
+  
+  .pause-button,
+  .center-button {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    min-width: 100px;
+  }
+  
+  .canvas-container {
+    margin-top: 90px !important;
+    padding: 0 5px;
+  }
+  
+  .modal-content {
+    width: 95vw;
+    padding: 15px;
+    margin: 5px;
+    max-height: 85vh;
+  }
+  
+  .modal-content h2 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+  
+  .modal-content p {
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  
+  .modal-content button {
+    padding: 12px 24px;
+    font-size: 0.9rem;
+    width: 100%;
+    margin-top: 10px;
+  }
+  
+  .info-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 15px 15px 0 0;
+    max-height: 50vh;
+    margin: 0;
+  }
+  
+  .info-panel h2 {
+    font-size: 1.1rem;
+  }
+  
+  .info-panel p {
+    font-size: 0.85rem;
+  }
+  
+  .info-panel button {
+    width: calc(50% - 5px);
+    margin: 3px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Smartphones pequeños */
+@media (max-width: 480px) {
+  .top-bar {
+    min-height: 80px;
+    padding: 5px 8px;
+  }
+  
+  .top-bar h1 {
+    font-size: 1rem;
+  }
+  
+  .pause-button,
+  .center-button {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    min-width: 90px;
+  }
+  
+  .control-buttons {
+    gap: 5px;
+  }
+  
+  .canvas-container {
+    margin-top: 100px !important;
+  }
+  
+  .modal-content {
+    width: 98vw;
+    padding: 12px;
+  }
+  
+  .modal-content h2 {
+    font-size: 1.1rem;
+  }
+  
+  .modal-content p {
+    font-size: 0.8rem;
+  }
+  
+  .info-panel button {
+    width: 100%;
+    margin: 2px 0;
+  }
+}
+
+/* Orientación horizontal en móviles */
+@media (max-height: 500px) and (orientation: landscape) {
+  .top-bar {
+    min-height: 50px;
+  }
+  
+  .top-bar h1 {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+  }
+  
+  .pause-button,
+  .center-button {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+  
+  .canvas-container {
+    margin-top: 60px !important;
+  }
+  
+  .modal-content {
+    max-height: 90vh;
+    width: 90vw;
+  }
+  
+  .info-panel {
+    max-height: 35vh;
+    padding: 10px;
+  }
+}
 </style>

@@ -12,5 +12,18 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  server: {
+    host: true, // Permite acceso desde la red
+    port: 5173, // Puerto por defecto
+    strictPort: false, // Si el puerto está ocupado, usar el siguiente disponible
+    open: false, // No abrir automáticamente el navegador
+    cors: true // Habilitar CORS
+  },
+  preview: {
+    host: true, // También para el preview
+    port: 4173,
+    strictPort: false,
+    open: false
   }
 })

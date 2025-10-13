@@ -59,4 +59,48 @@ export default {
   padding: 20px;
   border-radius: 15px;
 }
+
+/* ========================================= */
+/* RESPONSIVE DESIGN PARA LOCATIONSELECTOR */
+/* ========================================= */
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .location-selector {
+    padding: 15px;
+    min-height: auto;
+  }
+  
+  .map-container {
+    max-width: 95%;
+    padding: 15px;
+    gap: 15px;
+  }
+}
+
+/* Smartphones */
+@media (max-width: 768px) {
+  .location-selector {
+    padding: 10px;
+  }
+  
+  .map-container {
+    max-width: 100%;
+    padding: 10px;
+    gap: 10px;
+    border-radius: 10px;
+  }
+}
+
+/* Smartphones pequeños */
+@media (max-width: 480px) {
+  .location-selector {
+    padding: 5px;
+  }
+  
+  .map-container {
+    padding: 5px;
+    gap: 8px;
+  }
+}
 </style>

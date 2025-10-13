@@ -49,13 +49,23 @@ export default {
   },
   methods: {
     initHorizonView() {
+      // Calcular dimensiones responsive
+      const container = this.$refs.horizonContainer;
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      
+      // Usar dimensiones del contenedor para responsive
+      const width = containerWidth > 0 ? containerWidth : 800;
+      const height = containerHeight > 0 ? containerHeight : 400;
+      
       this.scene = markRaw(new THREE.Scene());
-      this.camera = markRaw(new THREE.PerspectiveCamera(75, 800 / 400, 0.1, 1000));
+      this.camera = markRaw(new THREE.PerspectiveCamera(75, width / height, 0.1, 1000));
       this.renderer = markRaw(new THREE.WebGLRenderer({ antialias: true }));
       
-      this.renderer.setSize(800, 400);
+      this.renderer.setSize(width, height);
       this.renderer.setClearColor(0x000033);
-      this.$refs.horizonContainer.appendChild(this.renderer.domElement);
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimización móvil
+      container.appendChild(this.renderer.domElement);
       
       // Crear el horizonte (semi-esfera)
       this.createHorizonSphere();
@@ -73,6 +83,9 @@ export default {
       
       // Controles de cámara para mirar alrededor
       this.addHorizonControls();
+      
+      // Manejar resize responsive
+      this.addResizeHandler();
       
       // Iniciar animación
       this.animate();
@@ -233,6 +246,33 @@ export default {
       console.log('🎮 Controles de horizonte activados - Haz clic y arrastra para mirar alrededor');
     },
 
+    addResizeHandler() {
+      const handleResize = () => {
+        const container = this.$refs.horizonContainer;
+        if (container && this.renderer && this.camera) {
+          const width = container.clientWidth;
+          const height = container.clientHeight;
+          
+          // Actualizar cámara
+          this.camera.aspect = width / height;
+          this.camera.updateProjectionMatrix();
+          
+          // Actualizar renderer
+          this.renderer.setSize(width, height);
+          this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        }
+      };
+      
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', handleResize);
+      
+      // Limpiar listeners en unmount
+      this.$once('hook:beforeUnmount', () => {
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('orientationchange', handleResize);
+      });
+    },
+
     updateExoplanetMarkers() {
       // Limpiar marcadores existentes
       const markersToRemove = [];
@@ -342,5 +382,75 @@ export default {
 .horizon-view:hover {
   border-color: #357abd;
   box-shadow: 0 8px 32px rgba(74, 144, 226, 0.3);
+}
+
+/* ========================================= */
+/* RESPONSIVE DESIGN PARA HORIZONVIEWER */
+/* ========================================= */
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .horizon-viewer-component {
+    padding: 10px;
+  }
+  
+  .horizon-view {
+    width: 100%;
+    height: 70vh;
+    min-height: 400px;
+  }
+  
+  .horizon-view canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+/* Smartphones */
+@media (max-width: 768px) {
+  .horizon-viewer-component {
+    padding: 5px;
+  }
+  
+  .horizon-view {
+    width: 100%;
+    height: 60vh;
+    min-height: 300px;
+    border-width: 1px;
+    border-radius: 10px;
+  }
+  
+  .horizon-view canvas {
+    border-radius: 9px;
+  }
+}
+
+/* Smartphones pequeños */
+@media (max-width: 480px) {
+  .horizon-view {
+    height: 50vh;
+    min-height: 250px;
+    border-radius: 8px;
+  }
+  
+  .horizon-view canvas {
+    border-radius: 7px;
+  }
+}
+
+/* Orientación horizontal */
+@media (max-height: 500px) and (orientation: landscape) {
+  .horizon-view {
+    height: 80vh;
+    min-height: 200px;
+  }
+}
+
+/* Pantallas muy pequeñas */
+@media (max-width: 320px) {
+  .horizon-view {
+    height: 45vh;
+    min-height: 200px;
+  }
 }
 </style>
